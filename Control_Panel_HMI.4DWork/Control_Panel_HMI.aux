@@ -1,0 +1,339 @@
+==============================================================
+==============================================================
+4DGL Compiler 2.8.1.0 -- Copyright 2004-2016 4D Labs
+** \\vmware-host\Shared Folders\Documents\workspace\PROJECTS\Home Automation\4D Systems\Control Panel HMI\Control_Panel_HMI.4Dg
+compiled Sat Sep 15 12:53:00 2018
+
+==============================================================
+==============================================================
+
+
+No Ref for file
+[LINKING]
+function 13, main(main entry point), address 0x78, stack usage 4 + 4 
+returnValue                            2  word     [local]  (usage 6)
+formNumber                             1  word     [local]  (usage 9)
+
+[LINKING]
+function 12, Form5, address 0x190, stack usage 6 + 4 
+index                                  1  word     [local]  (usage 33)
+formReturnValue                        3  word     [local]  (usage 18)
+state                                  2  word     [local]  (usage 9)
+
+[LINKING]
+function 11, Form4, address 0x4a9, stack usage 6 + 4 
+index                                  1  word     [local]  (usage 33)
+formReturnValue                        3  word     [local]  (usage 18)
+state                                  2  word     [local]  (usage 9)
+
+[LINKING]
+function 10, Form3, address 0x7d2, stack usage 6 + 4 
+index                                  1  word     [local]  (usage 39)
+formReturnValue                        3  word     [local]  (usage 18)
+state                                  2  word     [local]  (usage 9)
+
+[LINKING]
+function 9, Form2, address 0xba2, stack usage 6 + 4 
+index                                  1  word     [local]  (usage 51)
+formReturnValue                        3  word     [local]  (usage 18)
+state                                  2  word     [local]  (usage 9)
+
+[LINKING]
+function 8, Form1, address 0x1130, stack usage 6 + 4 
+index                                  1  word     [local]  (usage 33)
+formReturnValue                        3  word     [local]  (usage 18)
+state                                  2  word     [local]  (usage 9)
+
+[LINKING]
+function 7, monitorScreenActivity, address 0x1435, stack usage 0 + 4 
+
+[LINKING]
+function 6, lostCommunications, address 0x14aa, stack usage 0 + 4 
+
+[LINKING]
+function 5, checkComms, address 0x1537, stack usage 0 + 4 
+
+[LINKING]
+function 4, serialTransmit, address 0x158b, stack usage 0 + 4 
+
+[LINKING]
+function 3, serialReceive, address 0x165b, stack usage 16 + 4 
+gdTest                                 3  word     [local]  (usage 9)
+hbTest                                 8  word     [local]  (usage 9)
+pointer                                2  word     [local]  (usage 9)
+ptTest                                 7  word     [local]  (usage 9)
+z3Test                                 6  word     [local]  (usage 9)
+z2Test                                 5  word     [local]  (usage 9)
+z1Test                                 4  word     [local]  (usage 9)
+i                                      1  word     [local]  (usage 12)
+
+[LINKING]
+function 2, disableFormsBackground, address 0x1850, stack usage 0 + 4 
+
+[LINKING]
+function 1, mountuSDCard, address 0x188f, stack usage 0 + 4 
+
+[RESERVED WORDS]
+#inherit
+#LISTCODE
+#MODE
+#STACK
+#OPTIMIZE_ON
+#OPTIMIZE_OFF
+byte
+word
+dword
+float
+private
+#IF
+#IFNOT
+#ELSE
+#ENDIF
+#CONST
+#constant
+#USE
+USING
+func
+endfunc
+var
+#STOP
+#DATA
+#ASM
+#END
+#platform
+EXISTS
+#ERROR
+#MESSAGE
+#NOTICE
+sizeof
+argcount
+if
+else
+endif
+while
+wend
+repeat
+until
+forever
+return
+break
+continue
+for
+next
+switch
+case
+default
+endswitch
+print
+goto
+gosub
+endsub
+mcall
+lookup8
+lookup16
+
+[MACRO]
+
+[CONSTANTS]
+__MAXMEM                          00008000      32768  (usage 1)
+__MAXPROG                         00007FEE      32750  (usage 1)
+APPEND                            00000000          0  (usage 24)
+COM0                              0000F804      63492  (usage 6)
+DEC                               0000050A       1290  (usage 12)
+DIABLO                            00000003          3  (usage 3)
+i4Dbutton1                        0000000E         14  (usage 33)
+i4Dbutton2                        0000000F         15  (usage 33)
+i4Dbutton3                        00000010         16  (usage 33)
+i4Dbutton4                        0000001F         31  (usage 33)
+I_TOUCH_DISABLE                   00000020         32  (usage 189)
+iAngularmeter1                    00000026         38  (usage 12)
+iForm1                            00000000          0  (usage 9)
+iForm2                            00000008          8  (usage 9)
+iForm3                            00000017         23  (usage 9)
+iForm4                            00000020         32  (usage 9)
+iForm5                            00000027         39  (usage 9)
+iImage1                           00000001          1  (usage 3)
+IMAGE_INDEX                       00000009          9  (usage 291)
+iStatictext1                      00000002          2  (usage 3)
+iStatictext2                      00000014         20  (usage 3)
+iStatictext3                      00000015         21  (usage 3)
+iStatictext4                      00000016         22  (usage 3)
+iStatictext5                      0000001D         29  (usage 3)
+iStatictext6                      0000002D         45  (usage 3)
+iStatictext7                      0000002E         46  (usage 3)
+iStatictext8                      0000002F         47  (usage 3)
+iStatictext9                      00000030         48  (usage 3)
+iUserled1                         00000011         17  (usage 15)
+iUserled2                         00000012         18  (usage 15)
+iUserled3                         00000013         19  (usage 15)
+iUserled4                         0000001E         30  (usage 15)
+iWinbutton1                       00000003          3  (usage 33)
+iWinbutton10                      0000000D         13  (usage 33)
+iWinbutton11                      00000018         24  (usage 33)
+iWinbutton12                      00000019         25  (usage 33)
+iWinbutton13                      0000001A         26  (usage 33)
+iWinbutton14                      0000001B         27  (usage 33)
+iWinbutton15                      0000001C         28  (usage 33)
+iWinbutton16                      00000021         33  (usage 33)
+iWinbutton17                      00000022         34  (usage 33)
+iWinbutton18                      00000023         35  (usage 33)
+iWinbutton19                      00000024         36  (usage 33)
+iWinbutton2                       00000004          4  (usage 33)
+iWinbutton20                      00000025         37  (usage 33)
+iWinbutton21                      00000028         40  (usage 33)
+iWinbutton22                      00000029         41  (usage 33)
+iWinbutton23                      0000002A         42  (usage 33)
+iWinbutton24                      0000002B         43  (usage 33)
+iWinbutton25                      0000002C         44  (usage 33)
+iWinbutton3                       00000005          5  (usage 33)
+iWinbutton4                       00000006          6  (usage 33)
+iWinbutton5                       00000007          7  (usage 33)
+iWinbutton6                       00000009          9  (usage 33)
+iWinbutton7                       0000000A         10  (usage 33)
+iWinbutton8                       0000000B         11  (usage 33)
+iWinbutton9                       0000000C         12  (usage 33)
+LANDSCAPE                         00000000          0  (usage 3)
+ON                                00000001          1  (usage 3)
+RED                               0000F800      63488  (usage 3)
+SCREEN_MODE                       00000017         23  (usage 3)
+TIMER0                            00000000          0  (usage 15)
+TIMER1                            00000001          1  (usage 12)
+TOUCH_ENABLE                      00000000          0  (usage 3)
+TOUCH_PRESSED                     00000001          1  (usage 15)
+TOUCH_RELEASED                    00000002          2  (usage 15)
+TOUCH_STATUS                      00000000          0  (usage 15)
+WHITE                             0000FFFF      65535  (usage 3)
+YELLOW                            0000FFE0      65504  (usage 3)
+
+[PmmC FUNCTIONS]
+com_Count                         FFFFFF08        -248  args=0 r=1  (usage 3)
+com_Init                          FFFFFF18        -232  args=3 r=0  (usage 3)
+com_SetBaud                       FFFFFF1F        -225  args=2 r=1  (usage 3)
+file_LoadImageControl             FFFFFE3D        -451  args=3 r=1  (usage 3)
+file_Mount                        FFFFFE3C        -452  args=0 r=1  (usage 6)
+flt_FTOI                          FFFFFF94        -108  args=1 r=1  (usage 18)
+flt_VAL                           FFFFFFB2         -78  args=2 r=1  (usage 18)
+gfx_Cls                           FFFFFF82        -126  args=0 r=0  (usage 18)
+gfx_Contrast                      FFFFFF40        -192  args=1 r=1  (usage 6)
+gfx_MoveTo                        FFFFFF81        -127  args=2 r=0  (usage 3)
+gfx_RectangleFilled               FFFFFF79        -135  args=5 r=0  (usage 3)
+gfx_Set                           FFFFFF83        -125  args=2 r=0  (usage 3)
+gfx_Transparency                  FFFFFF44        -188  args=1 r=1  (usage 3)
+gfx_TransparentColour             FFFFFF45        -187  args=1 r=1  (usage 3)
+img_ClearAttributes               FFFFFE81        -383  args=3 r=1  (usage 87)
+img_SetAttributes                 FFFFFE82        -382  args=3 r=1  (usage 102)
+img_SetWord                       FFFFFE85        -379  args=4 r=1  (usage 291)
+img_Show                          FFFFFE83        -381  args=2 r=1  (usage 450)
+img_Touched                       FFFFFE80        -384  args=2 r=1  (usage 15)
+mem_Set                           FFFFFE5D        -419  args=3 r=1  (usage 27)
+pause                             FFFFFFFA          -6  args=1 r=0  (usage 18)
+putnum                            FFFFFFF9          -7  args=2 r=1  (usage 12)
+putstr                            FFFFFFF7          -9  args=1 r=1  (usage 9)
+serin                             FFFFFF14        -236  args=0 r=1  (usage 3)
+str_Length                        FFFFFE1D        -483  args=1 r=1  (usage 3)
+str_Printf                        FFFFFE1C        -484  args=2 r=1  (usage 3)
+str_Ptr                           FFFFFE2A        -470  args=1 r=1  (usage 21)
+str_PutByte                       FFFFFE23        -477  args=2 r=0  (usage 6)
+sys_GetTimer                      FFFFFE76        -394  args=1 r=1  (usage 6)
+sys_SetTimer                      FFFFFE77        -393  args=2 r=0  (usage 15)
+sys_SetTimerEvent                 FFFFFE75        -395  args=2 r=1  (usage 6)
+to                                FFFFFFFF          -1  args=1 r=0  (usage 33)
+touch_Get                         FFFFFE68        -408  args=1 r=1  (usage 15)
+touch_Set                         FFFFFE69        -407  args=1 r=0  (usage 3)
+txt_Set                           FFFFFFEF         -17  args=2 r=0  (usage 12)
+
+[USER FUNCTIONS]
+checkComms                        00001537  args=0 r=0  (usage 3)
+disableFormsBackground            00001850  args=0 r=0  (usage 3)
+Form1                             00001130  args=0 r=0  (usage 3)
+Form2                             00000BA2  args=0 r=0  (usage 3)
+Form3                             000007D2  args=0 r=0  (usage 3)
+Form4                             000004A9  args=0 r=0  (usage 3)
+Form5                             00000190  args=0 r=0  (usage 3)
+lostCommunications                000014AA  args=0 r=0  (usage 15)
+monitorScreenActivity             00001435  args=0 r=0  (usage 18)
+mountuSDCard                      0000188F  args=0 r=0  (usage 3)
+serialReceive                     0000165B  args=0 r=0  (usage 18)
+serialTransmit                    0000158B  args=0 r=0  (usage 12)
+
+[GLOBAL VARIABLES]
+char                                   2  word       (usage 15)
+commandOutputBuffer                  359  word[20]   (usage 9)
+commBuffer                             3  word[100]   (usage 3)
+commsLost                            380  word       (usage 12)
+count                                204  word       (usage 9)
+drawCommsOK                          381  word       (usage 12)
+drawLostComms                        382  word       (usage 12)
+feedback                             205  word[6]   (usage 24)
+garageDoorButtonState                358  word       (usage 18)
+garageDoorST                         349  word       (usage 9)
+garageDoorState                      211  word[20]   (usage 6)
+gdFloat                              337  word[2]   (usage 3)
+heartBeat                            354  word       (usage 9)
+heartBeatFloat                       347  word[2]   (usage 3)
+heartBeatString                      311  word[20]   (usage 6)
+hndl                                   1  word       (usage 948)
+panelTemperature                     291  word[20]   (usage 6)
+panelTemperatureFlt                  345  word[2]   (usage 3)
+panelTemperatureINT                  353  word       (usage 9)
+screenActivityCounter                385  word       (usage 12)
+screenIsActive                       383  word       (usage 27)
+screenIsInactive                     384  word       (usage 9)
+stateFeedbackAsFloat                 331  word[6]   (usage 72)
+stringBuffer                         103  word[100]   (usage 6)
+stringPointer                        203  word       (usage 12)
+timerCounter                         379  word       (usage 9)
+zOneFloat                            339  word[2]   (usage 3)
+zoneOneButtonState                   355  word       (usage 18)
+zoneOneST                            350  word       (usage 9)
+zoneOneState                         231  word[20]   (usage 6)
+zoneThreeButtonState                 357  word       (usage 18)
+zoneThreeST                          352  word       (usage 9)
+zoneThreeState                       271  word[20]   (usage 6)
+zoneTwoButtonState                   356  word       (usage 18)
+zoneTwoST                            351  word       (usage 9)
+zoneTwoState                         251  word[20]   (usage 6)
+zThreeFloat                          343  word[2]   (usage 3)
+zTwoFloat                            341  word[2]   (usage 3)
+
+[PRIVATE VARIABLES]
+
+[DATA]
+0007: 30 11 A2 0B D2 07 A9 04 90 01 43 4F 4E 54 7E 46     0.¢.“.©.ê.CONT~F
+0017: 32 43 2E 64 61 74 00 43 4F 4E 54 7E 46 32 43 2E     2C.dat.CONT~F2C.
+0027: 67 63 69 00 43 6F 6D 6D 75 6E 69 63 61 74 69 6F     gci.Communicatio
+0037: 6E 73 20 4C 6F 73 74 20 77 69 74 68 20 43 6F 6E     ns Lost with Con
+0047: 74 72 6F 6C 6C 65 72 00 2C 00 0A 00 25 73 00 4D     troller.,...%s.M
+0057: 6F 75 6E 74 69 6E 67 2E 2E 2E 0A 00 44 72 69 76     ounting.....Driv
+0067: 65 20 6E 6F 74 20 6D 6F 75 6E 74 65 64 2E 2E 2E     e not mounted...
+0077: 00                                                  .
+
+[__MAXPROG]
+32750
+[__MAXMEM]
+32768
+
+[PROGRAM]
+main
+[CODESIZE]
+6349
+[MEMSIZE]
+385
+[ARGCOUNT]
+0
+[RETURNS]
+NO
+[STACKSIZE]
+0 (AUTO)
+[STACK_ESTIMATE]
+102   (nb:- worst case estimate)
+[MODE]
+0
+
+[PROJECT]
+\\vmware-host\Shared Folders\Documents\workspace\PROJECTS\Home Automation\4D Systems\Control Panel HMI\Control_Panel_HMI.4Dg
+C:\Program Files (x86)\4D Labs\4D Workshop 4 IDE\include\Gen4-uLCD-50DT.fnc
+C:\Program Files (x86)\4D Labs\4D Workshop 4 IDE\include\Diablo16_Functions.fnc
+C:\Program Files (x86)\4D Labs\4D Workshop 4 IDE\include\4DGL_16bitColours.fnc
+C:\Program Files (x86)\4D Labs\4D Workshop 4 IDE\include\VisualConst.inc
+\\vmware-host\Shared Folders\Documents\workspace\PROJECTS\Home Automation\4D Systems\Control Panel HMI\Control_Panel_HMI.4DWork\Control_Panel_HMIConst.inc

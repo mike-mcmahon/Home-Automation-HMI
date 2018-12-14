@@ -1,0 +1,1284 @@
+#platform "Gen4-uLCD-50DT"
+
+
+// Program Skeleton 1.3 generated 8/12/2018 11:29:05 AM
+
+#inherit "4DGL_16bitColours.fnc"
+
+#inherit "VisualConst.inc"
+
+#inherit "Control_Panel_HMIConst.inc"
+
+
+#DATA
+    word Form Form1, Form2, Form3, Form4, Form5
+#END
+
+//**GLOBAL VARIABLES**
+//variables for string handling
+var char;
+var commBuffer[100];
+var stringBuffer[100];
+var stringPointer;
+var count;
+
+//Monitor-Feedback
+//String representation of incoming serial data
+var feedback[6];
+var garageDoorState[20];
+var zoneOneState[20];
+var zoneTwoState[20];
+var zoneThreeState[20];
+var panelTemperature[20];
+var heartBeatString[20];
+
+//floating point array for state values
+var stateFeedbackAsFloat[6];
+var gdFloat[2];
+var zOneFloat[2];
+var zTwoFloat[2];
+var zThreeFloat[2];
+var panelTemperatureFlt[2];
+var heartBeatFloat[2];
+
+//integer values for state values
+var garageDoorST;
+var zoneOneST;
+var zoneTwoST;
+var zoneThreeST;
+var panelTemperatureINT;
+var heartBeat;
+
+//control outputs
+var zoneOneButtonState;
+var zoneTwoButtonState;
+var zoneThreeButtonState;
+var garageDoorButtonState;
+
+//serial output buffer
+var commandOutputBuffer[20];
+
+//counter for communication heartbeat
+var timerCounter;
+var commsLost;
+var drawCommsOK;
+var drawLostComms;
+
+/* use variable screenIsActive inside each function.  Set on touch pressed, reset on touch release. */
+var screenIsActive;
+var screenIsInactive;
+var screenActivityCounter;
+
+func mountuSDCard()
+
+    putstr("Mounting...\n");
+    if (!(file_Mount()))
+        while(!(file_Mount()))
+            putstr("Drive not mounted...");
+            pause(200);
+            gfx_Cls();
+            pause(200);
+        wend
+    endif
+
+endfunc
+
+
+func disableFormsBackground()
+
+    //disable touch detection for backround image of Form1
+    img_SetAttributes(hndl, iForm1, I_TOUCH_DISABLE);
+
+    //disable touch detection for backround image of Form2
+    img_SetAttributes(hndl, iForm2, I_TOUCH_DISABLE);
+
+    //disable touch detection for backround image of Form3
+    img_SetAttributes(hndl, iForm3, I_TOUCH_DISABLE);
+
+    //disable touch detection for backround image of Form4
+    img_SetAttributes(hndl, iForm4, I_TOUCH_DISABLE);
+
+     //disable touch detection for backround image of Form5
+    img_SetAttributes(hndl, iForm5, I_TOUCH_DISABLE);
+
+    return 0;
+
+endfunc
+
+
+func serialReceive()
+
+    //Receive serial input as string and
+    //convert individual strings into floating point values.  Use built in FTOI function to convert values to integers.
+    //Data to be received in order: garage door state, zone 1 state, zone 2 state,
+    //zone 3 state, and then panel temperature.
+
+    if (com_Count())
+        char := serin();
+
+        if (char != '\n')
+
+            if (char == ',') char := 0;
+
+                str_PutByte(stringPointer+count++, char);
+
+                str_PutByte(stringPointer+count, 0);
+
+            else
+
+                var i;
+                var pointer;
+                pointer := stringPointer;
+                i:= 0;
+
+                //copy each 'substring' in
+                while (str_Length(pointer) != 0)
+
+                    mem_Set(feedback[i], 0, 20);
+
+                    to (feedback[i]); str_Printf(&pointer, "%s");
+
+                    i++;
+
+                wend
+
+
+                //convert the numeric strings to integer numbers
+                var gdTest, z1Test, z2Test, z3Test, ptTest, hbTest;
+
+                //update garageDoor state
+                mem_Set(stateFeedbackAsFloat[0], 0, 2);
+                flt_VAL(stateFeedbackAsFloat[0], str_Ptr(garageDoorState));
+                gdTest := flt_FTOI(stateFeedbackAsFloat[0]);
+                //if gdTest is less than value '333' used as an ignore value, update garageDoor state
+                if(gdTest < 2)
+                    garageDoorST := gdTest;
+                endif
+
+                //update zone 1 state
+                mem_Set(stateFeedbackAsFloat[1], 0, 2);
+                flt_VAL(stateFeedbackAsFloat[1], str_Ptr(zoneOneState));
+                z1Test := flt_FTOI(stateFeedbackAsFloat[1]);
+                //if z1Test is less than value '333' used as an ignore value, update garageDoor state
+                if(z1Test < 2)
+                    zoneOneST := z1Test;
+                endif
+
+                //update zone 2 state
+                mem_Set(stateFeedbackAsFloat[2], 0, 2);
+                flt_VAL(stateFeedbackAsFloat[2], str_Ptr(zoneTwoState));
+                z2Test := flt_FTOI(stateFeedbackAsFloat[2]);
+                //if z2Test is less than value '333' used as an ignore value, update garageDoor state
+                if(z2Test < 2)
+                    zoneTwoST := z2Test;
+                endif
+
+                //update zone 3 state
+                mem_Set(stateFeedbackAsFloat[3], 0, 2);
+                flt_VAL(stateFeedbackAsFloat[3], str_Ptr(zoneThreeState));
+                z3Test := flt_FTOI(stateFeedbackAsFloat[3]);
+                //if z3Test is less than value '333' used as an ignore value, update garageDoor state
+                if(z3Test < 2)
+                    zoneThreeST := z3Test;
+                endif
+
+                //update panel temperature
+                mem_Set(stateFeedbackAsFloat[4], 0, 2);
+                flt_VAL(stateFeedbackAsFloat[4], str_Ptr(panelTemperature));
+                ptTest := flt_FTOI(stateFeedbackAsFloat[4]);
+                //if ptTest is less than value '333' used as an ignore value, update garageDoor state
+                if(ptTest < 300)
+                    panelTemperatureINT := ptTest;
+                endif
+
+                //update heartbeat
+                mem_Set(stateFeedbackAsFloat[5], 0, 2);
+                flt_VAL(stateFeedbackAsFloat[5], str_Ptr(heartBeatString));
+                hbTest := flt_FTOI(stateFeedbackAsFloat[5]);
+                //if hbTest is less than value '333' used as an ignore value, update garageDoor state
+                if(hbTest < 2)
+                    heartBeat := hbTest;
+                endif
+
+
+                count := 0;
+                mem_Set(stringBuffer, 0, 200);
+
+            endif
+
+        endif
+
+        return;
+
+endfunc
+
+
+func serialTransmit()
+
+    //clear commandOutputBuffer
+    mem_Set(commandOutputBuffer, 0, 20);
+
+    //build command string to transmit
+    to(commandOutputBuffer); putnum(DEC, garageDoorButtonState);
+    to(APPEND); print(",");
+    to(APPEND); putnum(DEC, zoneOneButtonState);
+    to(APPEND); print(",");
+    to(APPEND); putnum(DEC, zoneTwoButtonState);
+    to(APPEND); print(",");
+    to(APPEND); putnum(DEC, zoneThreeButtonState);
+    to(APPEND); print(",");
+    to(APPEND); print("\n");
+
+    //Transmit contents of commandOutputBuffer
+    to(COM0); putstr(commandOutputBuffer);
+
+    return;
+
+endfunc
+
+
+/* Function is called every 60 seconds when TIMER0 = 0 */
+func checkComms()
+
+    //if the timer times out, increment the counter, reset the timer.
+    if (sys_GetTimer(TIMER0) == 0)
+        timerCounter++;
+        sys_SetTimer(TIMER0, 60000);
+    endif
+
+    //if the heartbeat (every 5 minutes) is received, reset the timer, reset counter, set heartbeat to 0 for next check.
+    if(heartBeat)
+        sys_SetTimer(TIMER0, 60000);
+        timerCounter := 0;
+        heartBeat := 0;
+        commsLost := 0;
+    endif
+
+    //if the counter reaches 8 or higher, set message on screen that comms are lost
+    if(timerCounter >= 8)
+        commsLost := 1;
+    endif
+
+endfunc
+
+
+/* called from within each form repeat-forever loop */
+func lostCommunications()
+
+    if(commsLost && !drawLostComms)
+        txt_Set(0, YELLOW);
+        txt_Set(1, RED);
+        txt_Set(3, 2);
+        txt_Set(4, 2);
+        gfx_MoveTo(125, 10);
+        print("Communications Lost with Controller");
+        drawLostComms := 1;
+        drawCommsOK := 0;
+    endif
+
+    if(!commsLost && !drawCommsOK)
+        gfx_RectangleFilled(100, 10, 700, 33, 0x1E5C);
+        drawCommsOK := 1;
+        drawLostComms := 0;
+    endif
+
+endfunc
+
+
+/* called every time TIMER1 times out as a timer event, and on
+every touch pressed event. */
+func monitorScreenActivity()
+
+    //if the timer hits zero, reset timer and increment count.
+    if(sys_GetTimer(TIMER1) == 0)
+
+        screenActivityCounter++;
+
+        sys_SetTimer(TIMER1, 60000);
+
+    endif
+
+    //if screen is active reset the count
+    if(screenIsActive)
+
+        screenActivityCounter := 0;
+
+
+        if(screenIsActive && screenIsInactive)
+
+            gfx_Contrast(15);
+
+            screenIsInactive := 0;
+
+        endif
+
+        screenIsActive := 0;
+
+    endif
+
+    //if screen activity counter is exceeded reset counter and timer, set sleep.
+    if(screenActivityCounter >= 15)
+
+        //to prevent word overflow during long periods of inactivity
+        //keep the value of screenActivityCounter at a value of 5.
+        screenActivityCounter := 15;
+
+        screenIsInactive := 1;
+
+        screenIsActive := 0;
+
+        gfx_Contrast(0);
+
+    endif
+
+endfunc
+
+
+func Form1()
+
+    var index;
+    var state;
+    var formReturnValue;
+
+    gfx_Cls();
+
+    // Form1 1.1 generated 8/12/2018 12:31:11 PM
+    img_Show(hndl,iForm1);
+
+    // Gradient1 1.1 generated 8/12/2018 12:31:11 PM
+    img_Show(hndl,iForm1);
+
+    // Image1 1.0 generated 8/12/2018 12:31:11 PM
+    img_Show(hndl,iImage1);
+
+    // Statictext1 1.0 generated 8/12/2018 12:31:11 PM
+    img_Show(hndl,iStatictext1);
+
+    // Winbutton1 1.0 generated 8/12/2018 12:31:11 PM
+    img_ClearAttributes(hndl, iWinbutton1, I_TOUCH_DISABLE);
+    img_Show(hndl, iWinbutton1);
+    img_SetWord(hndl, iWinbutton1, IMAGE_INDEX, 0);
+    img_Show(hndl,iWinbutton1);
+
+    // Winbutton2 1.0 generated 8/12/2018 12:31:11 PM
+    img_ClearAttributes(hndl, iWinbutton2, I_TOUCH_DISABLE);
+    img_Show(hndl, iWinbutton2);
+    img_SetWord(hndl, iWinbutton2, IMAGE_INDEX, 0);
+    img_Show(hndl,iWinbutton2);
+
+    // Winbutton3 1.0 generated 8/12/2018 12:31:11 PM
+    img_ClearAttributes(hndl, iWinbutton3, I_TOUCH_DISABLE);
+    img_Show(hndl, iWinbutton3);
+    img_SetWord(hndl, iWinbutton3, IMAGE_INDEX, 0);
+    img_Show(hndl,iWinbutton3);
+
+    // Winbutton4 1.0 generated 8/12/2018 12:31:11 PM
+    img_ClearAttributes(hndl, iWinbutton4, I_TOUCH_DISABLE);
+    img_Show(hndl, iWinbutton4);
+    img_SetWord(hndl, iWinbutton4, IMAGE_INDEX, 0);
+    img_Show(hndl,iWinbutton4);
+
+    // Winbutton5 1.0 generated 8/12/2018 12:31:11 PM
+    img_ClearAttributes(hndl, iWinbutton5, I_TOUCH_DISABLE);
+    img_Show(hndl, iWinbutton5);
+    img_SetWord(hndl, iWinbutton5, IMAGE_INDEX, 0);
+    img_Show(hndl,iWinbutton5);
+
+    repeat
+
+        //read serial communications input
+        serialReceive();
+
+        //no items to refresh.  keep serial data up to date
+
+        state := touch_Get(TOUCH_STATUS);
+        index := img_Touched(hndl, -1);
+
+        if(state == TOUCH_PRESSED)
+
+            screenIsActive := 1;
+
+            //form navigation
+            if(index == iWinbutton1)
+                img_SetWord(hndl, iWinbutton1, IMAGE_INDEX, 1);
+                img_Show(hndl, iWinbutton1);
+            endif
+
+            if(index == iWinbutton2)
+                img_SetWord(hndl, iWinbutton2, IMAGE_INDEX, 1);
+                img_Show(hndl, iWinbutton2);
+            endif
+
+            if(index == iWinbutton3)
+                img_SetWord(hndl, iWinbutton3, IMAGE_INDEX, 1);
+                img_Show(hndl, iWinbutton3);
+            endif
+
+            if(index == iWinbutton4)
+                img_SetWord(hndl, iWinbutton4, IMAGE_INDEX, 1);
+                img_Show(hndl, iWinbutton4);
+            endif
+
+            if(index == iWinbutton5)
+                img_SetWord(hndl, iWinbutton5, IMAGE_INDEX, 1);
+                img_Show(hndl, iWinbutton5);
+            endif
+
+            monitorScreenActivity();
+
+        endif
+
+        if(state == TOUCH_RELEASED)
+
+            //form navigation
+            if(index == iWinbutton1)
+                img_SetWord(hndl, iWinbutton1, IMAGE_INDEX, 0);
+                img_Show(hndl, iWinbutton1);
+                formReturnValue := 0;
+                break;
+            endif
+
+            if(index == iWinbutton2)
+                img_SetWord(hndl, iWinbutton2, IMAGE_INDEX, 0);
+                img_Show(hndl, iWinbutton2);
+                formReturnValue := 1;
+                break;
+            endif
+
+            if(index == iWinbutton3)
+                img_SetWord(hndl, iWinbutton3, IMAGE_INDEX, 0);
+                img_Show(hndl, iWinbutton3);
+                formReturnValue := 2;
+                break;
+            endif
+
+            if(index == iWinbutton4)
+                img_SetWord(hndl, iWinbutton4, IMAGE_INDEX, 0);
+                img_Show(hndl, iWinbutton4);
+                formReturnValue := 3;
+                break;
+            endif
+
+            if(index == iWinbutton5)
+                img_SetWord(hndl, iWinbutton5, IMAGE_INDEX, 0);
+                img_Show(hndl, iWinbutton5);
+                formReturnValue := 4;
+                break;
+            endif
+
+        endif
+
+        //comms lost?
+        lostCommunications();
+
+
+    forever
+
+    img_SetAttributes(hndl, iWinbutton1, I_TOUCH_DISABLE);
+    img_SetAttributes(hndl, iWinbutton2, I_TOUCH_DISABLE);
+    img_SetAttributes(hndl, iWinbutton3, I_TOUCH_DISABLE);
+    img_SetAttributes(hndl, iWinbutton4, I_TOUCH_DISABLE);
+    img_SetAttributes(hndl, iWinbutton5, I_TOUCH_DISABLE);
+
+    return formReturnValue;
+
+endfunc
+
+
+func Form2()
+
+    var index;
+    var state;
+    var formReturnValue;
+
+    gfx_Cls();
+
+    // Form2 1.1 generated 8/12/2018 12:47:04 PM
+    img_Show(hndl,iForm2);
+
+    // Gradient5 1.1 generated 8/12/2018 12:47:04 PM
+    img_Show(hndl,iForm2);
+
+    // Winbutton6 1.0 generated 8/12/2018 12:47:04 PM
+    img_ClearAttributes(hndl, iWinbutton6, I_TOUCH_DISABLE);
+    img_Show(hndl, iWinbutton6);
+    img_SetWord(hndl, iWinbutton6, IMAGE_INDEX, 0);
+    img_Show(hndl,iWinbutton6);
+
+    // Winbutton7 1.0 generated 8/12/2018 12:47:04 PM
+    img_ClearAttributes(hndl, iWinbutton7, I_TOUCH_DISABLE);
+    img_Show(hndl, iWinbutton7);
+    img_SetWord(hndl, iWinbutton7, IMAGE_INDEX, 0);
+    img_Show(hndl,iWinbutton7);
+
+    // Winbutton8 1.0 generated 8/12/2018 12:47:04 PM
+    img_ClearAttributes(hndl, iWinbutton8, I_TOUCH_DISABLE);
+    img_Show(hndl, iWinbutton8);
+    img_SetWord(hndl, iWinbutton8, IMAGE_INDEX, 0);
+    img_Show(hndl,iWinbutton8);
+
+    // Winbutton9 1.0 generated 8/12/2018 12:47:04 PM
+    img_ClearAttributes(hndl, iWinbutton9, I_TOUCH_DISABLE);
+    img_Show(hndl, iWinbutton9);
+    img_SetWord(hndl, iWinbutton9, IMAGE_INDEX, 0);
+    img_Show(hndl,iWinbutton9);
+
+    // Winbutton10 1.0 generated 8/12/2018 12:47:04 PM
+    img_ClearAttributes(hndl, iWinbutton10, I_TOUCH_DISABLE);
+    img_Show(hndl, iWinbutton10);
+    img_SetWord(hndl, iWinbutton10, IMAGE_INDEX, 0);
+    img_Show(hndl,iWinbutton10);
+
+    // 4Dbutton1 1.0 generated 8/12/2018 12:47:04 PM
+    img_ClearAttributes(hndl, i4Dbutton1, I_TOUCH_DISABLE);
+    img_Show(hndl, i4Dbutton1);
+    img_SetWord(hndl, i4Dbutton1, IMAGE_INDEX, zoneOneButtonState);
+    img_Show(hndl,i4Dbutton1);
+
+    // 4Dbutton2 1.0 generated 8/12/2018 12:47:04 PM
+    img_ClearAttributes(hndl, i4Dbutton2, I_TOUCH_DISABLE);
+    img_Show(hndl, i4Dbutton2);
+    img_SetWord(hndl, i4Dbutton2, IMAGE_INDEX, zoneTwoButtonState);
+    img_Show(hndl,i4Dbutton2);
+
+    // 4Dbutton3 1.0 generated 8/12/2018 12:47:04 PM
+    img_ClearAttributes(hndl, i4Dbutton3, I_TOUCH_DISABLE);
+    img_Show(hndl, i4Dbutton3);
+    img_SetWord(hndl, i4Dbutton3, IMAGE_INDEX, zoneThreeButtonState);
+    img_Show(hndl,i4Dbutton3);
+
+    // Userled1 1.0 generated 8/12/2018 12:47:04 PM
+    img_Show(hndl,iUserled1);
+    img_SetWord(hndl, iUserled1, IMAGE_INDEX, zoneOneST);
+    img_Show(hndl,iUserled1);
+
+    // Userled2 1.0 generated 8/12/2018 12:47:04 PM
+    img_Show(hndl,iUserled2);
+    img_SetWord(hndl, iUserled2, IMAGE_INDEX, zoneTwoST);
+    img_Show(hndl,iUserled2);
+
+    // Userled3 1.0 generated 8/12/2018 12:47:04 PM
+    img_Show(hndl,iUserled3);
+    img_SetWord(hndl, iUserled3, IMAGE_INDEX, zoneThreeST);
+    img_Show(hndl,iUserled3);
+
+    // Statictext2 1.0 generated 8/12/2018 12:47:04 PM
+    img_Show(hndl,iStatictext2);
+
+    // Statictext3 1.0 generated 8/12/2018 12:47:05 PM
+    img_Show(hndl,iStatictext3);
+
+    // Statictext4 1.0 generated 8/12/2018 12:47:05 PM
+    img_Show(hndl,iStatictext4);
+
+    repeat
+
+        //read serial communications input
+        serialReceive();
+
+        //update state of iLEDs
+        img_SetWord(hndl, iUserled1, IMAGE_INDEX, zoneOneST);
+        img_Show(hndl, iUserled1);
+
+        img_SetWord(hndl, iUserled2, IMAGE_INDEX, zoneTwoST);
+        img_Show(hndl, iUserled2);
+
+        img_SetWord(hndl, iUserled3, IMAGE_INDEX, zoneThreeST);
+        img_Show(hndl, iUserled3);
+
+        state := touch_Get(TOUCH_STATUS);
+        index := img_Touched(hndl, -1);
+
+        if(state == TOUCH_PRESSED)
+
+            screenIsActive := 1;
+
+            //screen navigation
+            if(index == iWinbutton6)
+                img_SetWord(hndl, iWinbutton6, IMAGE_INDEX, 1);
+                img_Show(hndl, iWinbutton6);
+            endif
+
+            if(index == iWinbutton7)
+                img_SetWord(hndl, iWinbutton7, IMAGE_INDEX, 1);
+                img_Show(hndl, iWinbutton7);
+            endif
+
+            if(index == iWinbutton8)
+                img_SetWord(hndl, iWinbutton8, IMAGE_INDEX, 1);
+                img_Show(hndl, iWinbutton8);
+            endif
+
+            if(index == iWinbutton9)
+                img_SetWord(hndl, iWinbutton9, IMAGE_INDEX, 1);
+                img_Show(hndl, iWinbutton9);
+            endif
+
+            if(index == iWinbutton10)
+                img_SetWord(hndl, iWinbutton10, IMAGE_INDEX, 1);
+                img_Show(hndl, iWinbutton10);
+            endif
+
+            //zone control buttons
+            if(index == i4Dbutton1)
+                zoneOneButtonState := 1;
+                img_SetWord(hndl, i4Dbutton1, IMAGE_INDEX, zoneOneButtonState);
+                img_Show(hndl, i4Dbutton1);
+                serialTransmit();
+                //time delay to allow user to see that button has changed state.
+                pause(200);
+            endif
+
+            if(index == i4Dbutton2)
+                zoneTwoButtonState := 1;
+                img_SetWord(hndl, i4Dbutton2, IMAGE_INDEX, zoneTwoButtonState);
+                img_Show(hndl, i4Dbutton2);
+                serialTransmit();
+                //time delay to allow user to see that button has changed state.
+                pause(200);
+            endif
+
+            if(index == i4Dbutton3)
+                zoneThreeButtonState := 1;
+                img_SetWord(hndl, i4Dbutton3, IMAGE_INDEX, zoneThreeButtonState);
+                img_Show(hndl, i4Dbutton3);
+                serialTransmit();
+                //time delay to allow user to see that button has changed state.
+                pause(200);
+            endif
+
+            monitorScreenActivity();
+
+        endif
+
+        if(state == TOUCH_RELEASED)
+
+            //screen navigation
+            if(index == iWinbutton6)
+                img_SetWord(hndl, iWinbutton6, IMAGE_INDEX, 0);
+                img_Show(hndl, iWinbutton6);
+                formReturnValue := 0;
+                break;
+            endif
+
+            if(index == iWinbutton7)
+                img_SetWord(hndl, iWinbutton7, IMAGE_INDEX, 0);
+                img_Show(hndl, iWinbutton7);
+                formReturnValue := 1;
+                break;
+            endif
+
+            if(index == iWinbutton8)
+                img_SetWord(hndl, iWinbutton8, IMAGE_INDEX, 0);
+                img_Show(hndl, iWinbutton8);
+                formReturnValue := 2;
+                break;
+            endif
+
+            if(index == iWinbutton9)
+                img_SetWord(hndl, iWinbutton9, IMAGE_INDEX, 0);
+                img_Show(hndl, iWinbutton9);
+                formReturnValue := 3;
+                break;
+            endif
+
+            if(index == iWinbutton10)
+                img_SetWord(hndl, iWinbutton10, IMAGE_INDEX, 0);
+                img_Show(hndl, iWinbutton10);
+                formReturnValue := 4;
+                break;
+            endif
+
+            //zone control buttons
+            if(index == i4Dbutton1)
+                zoneOneButtonState := 0;
+                img_SetWord(hndl, i4Dbutton1, IMAGE_INDEX, zoneOneButtonState);
+                img_Show(hndl, i4Dbutton1);
+            endif
+
+            if(index == i4Dbutton2)
+                zoneTwoButtonState := 0;
+                img_SetWord(hndl, i4Dbutton2, IMAGE_INDEX, zoneTwoButtonState);
+                img_Show(hndl, i4Dbutton2);
+            endif
+
+            if(index == i4Dbutton3)
+                zoneThreeButtonState := 0;
+                img_SetWord(hndl, i4Dbutton3, IMAGE_INDEX, zoneThreeButtonState);
+                img_Show(hndl, i4Dbutton3);
+            endif
+
+        endif
+
+        //comms lost?
+        lostCommunications();
+
+    forever
+
+    img_SetAttributes(hndl, iWinbutton6, I_TOUCH_DISABLE);
+    img_SetAttributes(hndl, iWinbutton7, I_TOUCH_DISABLE);
+    img_SetAttributes(hndl, iWinbutton8, I_TOUCH_DISABLE);
+    img_SetAttributes(hndl, iWinbutton9, I_TOUCH_DISABLE);
+    img_SetAttributes(hndl, iWinbutton10, I_TOUCH_DISABLE);
+    img_SetAttributes(hndl, i4Dbutton1, I_TOUCH_DISABLE);
+    img_SetAttributes(hndl, i4Dbutton2, I_TOUCH_DISABLE);
+    img_SetAttributes(hndl, i4Dbutton3, I_TOUCH_DISABLE);
+
+    return formReturnValue;
+
+endfunc
+
+
+func Form3()
+
+    var index;
+    var state;
+    var formReturnValue;
+
+    gfx_Cls();
+
+    // Form3 1.1 generated 8/12/2018 12:54:57 PM
+    img_Show(hndl,iForm3);
+
+    // Gradient4 1.1 generated 8/12/2018 12:54:57 PM
+    img_Show(hndl,iForm3) ;
+
+    // Winbutton11 1.0 generated 8/12/2018 12:54:57 PM
+    img_ClearAttributes(hndl, iWinbutton11, I_TOUCH_DISABLE);
+    img_Show(hndl, iWinbutton11);
+    img_SetWord(hndl, iWinbutton11, IMAGE_INDEX, 0);
+    img_Show(hndl,iWinbutton11);
+
+    // Winbutton12 1.0 generated 8/12/2018 12:54:57 PM
+    img_ClearAttributes(hndl, iWinbutton12, I_TOUCH_DISABLE);
+    img_Show(hndl, iWinbutton12);
+    img_SetWord(hndl, iWinbutton12, IMAGE_INDEX, 0);
+    img_Show(hndl,iWinbutton12);
+
+    // Winbutton13 1.0 generated 8/12/2018 12:54:57 PM
+    img_ClearAttributes(hndl, iWinbutton13, I_TOUCH_DISABLE);
+    img_Show(hndl, iWinbutton13);
+    img_SetWord(hndl, iWinbutton13, IMAGE_INDEX, 0);
+    img_Show(hndl,iWinbutton13);
+
+    // Winbutton14 1.0 generated 8/12/2018 12:54:57 PM
+    img_ClearAttributes(hndl, iWinbutton14, I_TOUCH_DISABLE);
+    img_Show(hndl, iWinbutton14);
+    img_SetWord(hndl, iWinbutton14, IMAGE_INDEX, 0);
+    img_Show(hndl,iWinbutton14);
+
+    // Winbutton15 1.0 generated 8/12/2018 12:54:57 PM
+    img_ClearAttributes(hndl, iWinbutton15, I_TOUCH_DISABLE);
+    img_Show(hndl, iWinbutton15);
+    img_SetWord(hndl, iWinbutton15, IMAGE_INDEX, 0);
+    img_Show(hndl,iWinbutton15);
+
+    // Statictext5 1.0 generated 8/12/2018 12:54:58 PM
+    img_Show(hndl,iStatictext5);
+
+    // Userled4 1.0 generated 8/12/2018 12:54:58 PM
+    img_Show(hndl,iUserled4);
+    img_SetWord(hndl, iUserled4, IMAGE_INDEX, garageDoorST);
+    img_Show(hndl,iUserled4);
+
+    // 4Dbutton4 1.0 generated 8/12/2018 12:54:58 PM
+    img_ClearAttributes(hndl, i4Dbutton4, I_TOUCH_DISABLE);
+    img_Show(hndl, i4Dbutton4);
+    img_SetWord(hndl, i4Dbutton4, IMAGE_INDEX, garageDoorButtonState);
+    img_Show(hndl,i4Dbutton4);
+
+    repeat
+
+        //read serial communications input
+        serialReceive();
+
+        //update state of iLEDs
+        img_SetWord(hndl, iUserled4, IMAGE_INDEX, garageDoorST);
+        img_Show(hndl, iUserled4);
+
+        state := touch_Get(TOUCH_STATUS);
+        index := img_Touched(hndl, -1);
+
+        if(state == TOUCH_PRESSED)
+
+            screenIsActive := 1;
+
+            //form navigation
+            if(index == iWinbutton11)
+                img_SetWord(hndl, iWinbutton11, IMAGE_INDEX, 1);
+                img_Show(hndl, iWinbutton11);
+            endif
+
+            if(index == iWinbutton12)
+                img_SetWord(hndl, iWinbutton12, IMAGE_INDEX, 1);
+                img_Show(hndl, iWinbutton12);
+            endif
+
+            if(index == iWinbutton13)
+                img_SetWord(hndl, iWinbutton13, IMAGE_INDEX, 1);
+                img_Show(hndl, iWinbutton13);
+            endif
+
+            if(index == iWinbutton14)
+                img_SetWord(hndl, iWinbutton14, IMAGE_INDEX, 1);
+                img_Show(hndl, iWinbutton14);
+            endif
+
+            if(index == iWinbutton15)
+                img_SetWord(hndl, iWinbutton15, IMAGE_INDEX, 1);
+                img_Show(hndl, iWinbutton15);
+            endif
+
+            //control output
+            if(index == i4Dbutton4)
+                garageDoorButtonState := 1;
+                img_SetWord(hndl, i4Dbutton4, IMAGE_INDEX, garageDoorButtonState);
+                img_Show(hndl, i4Dbutton4);
+                serialTransmit();
+                //time delay to allow user to see that button has changed state.
+                pause(200);
+            endif
+
+            monitorScreenActivity();
+
+        endif
+
+        if(state == TOUCH_RELEASED)
+
+            //form navigation
+            if(index == iWinbutton11)
+                img_SetWord(hndl, iWinbutton11, IMAGE_INDEX, 0);
+                img_Show(hndl, iWinbutton11);
+                formReturnValue := 0;
+                break;
+            endif
+
+            if(index == iWinbutton12)
+                img_SetWord(hndl, iWinbutton12, IMAGE_INDEX, 0);
+                img_Show(hndl, iWinbutton12);
+                formReturnValue := 1;
+                break;
+            endif
+
+            if(index == iWinbutton13)
+                img_SetWord(hndl, iWinbutton13, IMAGE_INDEX, 0);
+                img_Show(hndl, iWinbutton13);
+                formReturnValue := 2;
+                break;
+            endif
+
+            if(index == iWinbutton14)
+                img_SetWord(hndl, iWinbutton14, IMAGE_INDEX, 0);
+                img_Show(hndl, iWinbutton14);
+                formReturnValue := 3;
+                break;
+            endif
+
+            if(index == iWinbutton15)
+                img_SetWord(hndl, iWinbutton15, IMAGE_INDEX, 0);
+                img_Show(hndl, iWinbutton15);
+                formReturnValue := 4;
+                break;
+            endif
+
+            //control output
+            if(index == i4Dbutton4)
+                garageDoorButtonState := 0;
+                img_SetWord(hndl, i4Dbutton4, IMAGE_INDEX, garageDoorButtonState);
+                img_Show(hndl, i4Dbutton4);
+            endif
+
+        endif
+
+        //comms lost?
+        lostCommunications();
+
+    forever
+
+    img_SetAttributes(hndl, iWinbutton11, I_TOUCH_DISABLE);
+    img_SetAttributes(hndl, iWinbutton12, I_TOUCH_DISABLE);
+    img_SetAttributes(hndl, iWinbutton13, I_TOUCH_DISABLE);
+    img_SetAttributes(hndl, iWinbutton14, I_TOUCH_DISABLE);
+    img_SetAttributes(hndl, iWinbutton15, I_TOUCH_DISABLE);
+    img_SetAttributes(hndl, i4Dbutton4, I_TOUCH_DISABLE);
+
+    return formReturnValue;
+
+endfunc
+
+
+func Form4()
+
+    var index;
+    var state;
+    var formReturnValue;
+
+    gfx_Cls();
+
+    // Form4 1.1 generated 8/12/2018 12:59:49 PM
+    img_Show(hndl,iForm4);
+
+    // Gradient3 1.1 generated 8/12/2018 12:59:49 PM
+    img_Show(hndl,iForm4);
+
+    // Winbutton16 1.0 generated 8/12/2018 12:59:49 PM
+    img_ClearAttributes(hndl, iWinbutton16, I_TOUCH_DISABLE);
+    img_Show(hndl, iWinbutton16);
+    img_SetWord(hndl, iWinbutton16, IMAGE_INDEX, 0);
+    img_Show(hndl,iWinbutton16);
+
+    // Winbutton17 1.0 generated 8/12/2018 12:59:49 PM
+    img_ClearAttributes(hndl, iWinbutton17, I_TOUCH_DISABLE);
+    img_Show(hndl, iWinbutton17);
+    img_SetWord(hndl, iWinbutton17, IMAGE_INDEX, 0);
+    img_Show(hndl,iWinbutton17);
+
+    // Winbutton18 1.0 generated 8/12/2018 12:59:49 PM
+    img_ClearAttributes(hndl, iWinbutton18, I_TOUCH_DISABLE);
+    img_Show(hndl, iWinbutton18);
+    img_SetWord(hndl, iWinbutton18, IMAGE_INDEX, 0);
+    img_Show(hndl,iWinbutton18);
+
+    // Winbutton19 1.0 generated 8/12/2018 12:59:49 PM
+    img_ClearAttributes(hndl, iWinbutton19, I_TOUCH_DISABLE);
+    img_Show(hndl, iWinbutton19);
+    img_SetWord(hndl, iWinbutton19, IMAGE_INDEX, 0);
+    img_Show(hndl,iWinbutton19);
+
+    // Winbutton20 1.0 generated 8/12/2018 12:59:49 PM
+    img_ClearAttributes(hndl, iWinbutton20, I_TOUCH_DISABLE);
+    img_Show(hndl, iWinbutton20);
+    img_SetWord(hndl, iWinbutton20, IMAGE_INDEX, 0);
+    img_Show(hndl,iWinbutton20);
+
+    //Angularmeter1 1.0 generated 8/12/2018 2:24:01 PM
+    // where frame is 0 to 140 (for a displayed -40 to 100)
+    img_SetWord(hndl, iAngularmeter1, IMAGE_INDEX, panelTemperatureINT + 40);
+    img_Show(hndl,iAngularmeter1);
+
+    repeat
+
+        //read serial communications input
+        serialReceive();
+
+        //update temperature on angular gauge
+        img_SetWord(hndl, iAngularmeter1, IMAGE_INDEX, panelTemperatureINT + 40);
+        img_Show(hndl,iAngularmeter1);
+
+        state := touch_Get(TOUCH_STATUS);
+        index := img_Touched(hndl, -1);
+
+        if(state == TOUCH_PRESSED)
+
+            screenIsActive := 1;
+
+            //form navigation
+            if(index == iWinbutton16)
+                img_SetWord(hndl, iWinbutton16, IMAGE_INDEX, 1);
+                img_Show(hndl, iWinbutton16);
+            endif
+
+            if(index == iWinbutton17)
+                img_SetWord(hndl, iWinbutton17, IMAGE_INDEX, 1);
+                img_Show(hndl, iWinbutton17);
+            endif
+
+            if(index == iWinbutton18)
+                img_SetWord(hndl, iWinbutton18, IMAGE_INDEX, 1);
+                img_Show(hndl, iWinbutton18);
+            endif
+
+            if(index == iWinbutton19)
+                img_SetWord(hndl, iWinbutton19, IMAGE_INDEX, 1);
+                img_Show(hndl, iWinbutton19);
+            endif
+
+            if(index == iWinbutton20)
+                img_SetWord(hndl, iWinbutton20, IMAGE_INDEX, 1);
+                img_Show(hndl, iWinbutton20);
+            endif
+
+            monitorScreenActivity();
+
+        endif
+
+        if(state == TOUCH_RELEASED)
+
+            //form navigation
+            if(index == iWinbutton16)
+                img_SetWord(hndl, iWinbutton16, IMAGE_INDEX, 0);
+                img_Show(hndl, iWinbutton16);
+                formReturnValue := 0;
+                break;
+            endif
+
+            if(index == iWinbutton17)
+                img_SetWord(hndl, iWinbutton17, IMAGE_INDEX, 0);
+                img_Show(hndl, iWinbutton17);
+                formReturnValue := 1;
+                break;
+            endif
+
+            if(index == iWinbutton18)
+                img_SetWord(hndl, iWinbutton18, IMAGE_INDEX, 0);
+                img_Show(hndl, iWinbutton18);
+                formReturnValue := 2;
+                break;
+            endif
+
+            if(index == iWinbutton19)
+                img_SetWord(hndl, iWinbutton19, IMAGE_INDEX, 0);
+                img_Show(hndl, iWinbutton19);
+                formReturnValue := 3;
+                break;
+            endif
+
+            if(index == iWinbutton20)
+                img_SetWord(hndl, iWinbutton20, IMAGE_INDEX, 0);
+                img_Show(hndl, iWinbutton20);
+                formReturnValue := 4;
+                break;
+            endif
+
+        endif
+
+         //comms lost?
+        lostCommunications();
+
+    forever
+
+    img_SetAttributes(hndl, iWinbutton16, I_TOUCH_DISABLE);
+    img_SetAttributes(hndl, iWinbutton17, I_TOUCH_DISABLE);
+    img_SetAttributes(hndl, iWinbutton18, I_TOUCH_DISABLE);
+    img_SetAttributes(hndl, iWinbutton19, I_TOUCH_DISABLE);
+    img_SetAttributes(hndl, iWinbutton20, I_TOUCH_DISABLE);
+
+    return formReturnValue;
+
+endfunc
+
+
+func Form5()
+
+    var index;
+    var state;
+    var formReturnValue;
+
+    gfx_Cls();
+
+    // Form5 1.1 generated 8/12/2018 1:03:54 PM
+    img_Show(hndl,iForm5);
+
+    // Gradient2 1.1 generated 8/12/2018 1:03:54 PM
+    img_Show(hndl,iForm5);
+
+    // Winbutton21 1.0 generated 8/12/2018 1:03:54 PM
+    img_ClearAttributes(hndl, iWinbutton21, I_TOUCH_DISABLE);
+    img_Show(hndl, iWinbutton21);
+    img_SetWord(hndl, iWinbutton21, IMAGE_INDEX, 0);
+    img_Show(hndl,iWinbutton21);
+
+    // Winbutton22 1.0 generated 8/12/2018 1:03:54 PM
+    img_ClearAttributes(hndl, iWinbutton22, I_TOUCH_DISABLE);
+    img_Show(hndl, iWinbutton22);
+    img_SetWord(hndl, iWinbutton22, IMAGE_INDEX, 0);
+    img_Show(hndl,iWinbutton22);
+
+    // Winbutton23 1.0 generated 8/12/2018 1:03:54 PM
+    img_ClearAttributes(hndl, iWinbutton23, I_TOUCH_DISABLE);
+    img_Show(hndl, iWinbutton23);
+    img_SetWord(hndl, iWinbutton23, IMAGE_INDEX, 0);
+    img_Show(hndl,iWinbutton23);
+
+    // Winbutton24 1.0 generated 8/12/2018 1:03:54 PM
+    img_ClearAttributes(hndl, iWinbutton24, I_TOUCH_DISABLE);
+    img_Show(hndl, iWinbutton24);
+    img_SetWord(hndl, iWinbutton24, IMAGE_INDEX, 0);
+    img_Show(hndl,iWinbutton24);
+
+    // Winbutton25 1.0 generated 8/12/2018 1:03:54 PM
+    img_ClearAttributes(hndl, iWinbutton25, I_TOUCH_DISABLE);
+    img_Show(hndl, iWinbutton25);
+    img_SetWord(hndl, iWinbutton25, IMAGE_INDEX, 0);
+    img_Show(hndl,iWinbutton25);
+
+    // Statictext6 1.0 generated 8/12/2018 1:03:54 PM
+    img_Show(hndl,iStatictext6);
+
+    // Statictext7 1.0 generated 8/12/2018 1:03:54 PM
+    img_Show(hndl,iStatictext7);
+
+    // Statictext8 1.0 generated 8/12/2018 1:03:54 PM
+    img_Show(hndl,iStatictext8);
+
+    // Statictext9 1.0 generated 8/12/2018 1:03:54 PM
+    img_Show(hndl,iStatictext9);
+
+    repeat
+
+        //read serial communications input
+        serialReceive();
+
+        //no items to refresh.  keep serial data up to date
+
+        state := touch_Get(TOUCH_STATUS);
+        index := img_Touched(hndl, -1);
+
+        if(state == TOUCH_PRESSED)
+
+            screenIsActive := 1;
+
+            //form navigation
+            if(index == iWinbutton21)
+                img_SetWord(hndl, iWinbutton21, IMAGE_INDEX, 1);
+                img_Show(hndl, iWinbutton21);
+            endif
+
+            if(index == iWinbutton22)
+                img_SetWord(hndl, iWinbutton22, IMAGE_INDEX, 1);
+                img_Show(hndl, iWinbutton22);
+            endif
+
+            if(index == iWinbutton23)
+                img_SetWord(hndl, iWinbutton23, IMAGE_INDEX, 1);
+                img_Show(hndl, iWinbutton23);
+            endif
+
+            if(index == iWinbutton24)
+                img_SetWord(hndl, iWinbutton24, IMAGE_INDEX, 1);
+                img_Show(hndl, iWinbutton24);
+            endif
+
+            if(index == iWinbutton25)
+                img_SetWord(hndl, iWinbutton25, IMAGE_INDEX, 1);
+                img_Show(hndl, iWinbutton25);
+            endif
+
+            monitorScreenActivity();
+
+        endif
+
+        if(state == TOUCH_RELEASED)
+
+            //form navigation
+            if(index == iWinbutton21)
+                img_SetWord(hndl, iWinbutton21, IMAGE_INDEX, 0);
+                img_Show(hndl, iWinbutton21);
+                formReturnValue := 0;
+                break;
+            endif
+
+            if(index == iWinbutton22)
+                img_SetWord(hndl, iWinbutton22, IMAGE_INDEX, 0);
+                img_Show(hndl, iWinbutton22);
+                formReturnValue := 1;
+                break;
+            endif
+
+            if(index == iWinbutton23)
+                img_SetWord(hndl, iWinbutton23, IMAGE_INDEX, 0);
+                img_Show(hndl, iWinbutton23);
+                formReturnValue := 2;
+                break;
+            endif
+
+            if(index == iWinbutton24)
+                img_SetWord(hndl, iWinbutton24, IMAGE_INDEX, 0);
+                img_Show(hndl, iWinbutton24);
+                formReturnValue := 3;
+                break;
+            endif
+
+            if(index == iWinbutton25)
+                img_SetWord(hndl, iWinbutton25, IMAGE_INDEX, 0);
+                img_Show(hndl, iWinbutton25);
+                formReturnValue := 4;
+                break;
+            endif
+
+        endif
+
+         //comms lost?
+        lostCommunications();
+
+    forever
+
+    img_SetAttributes(hndl, iWinbutton21, I_TOUCH_DISABLE);
+    img_SetAttributes(hndl, iWinbutton22, I_TOUCH_DISABLE);
+    img_SetAttributes(hndl, iWinbutton23, I_TOUCH_DISABLE);
+    img_SetAttributes(hndl, iWinbutton24, I_TOUCH_DISABLE);
+    img_SetAttributes(hndl, iWinbutton25, I_TOUCH_DISABLE);
+
+    return formReturnValue;
+
+endfunc
+
+
+func main()
+
+    var formNumber;
+    var returnValue;
+
+    //string values representing state
+    feedback[0] := garageDoorState;
+    feedback[1] := zoneOneState;
+    feedback[2] := zoneTwoState;
+    feedback[3] := zoneThreeState;
+    feedback[4] := panelTemperature;
+    feedback[5] := heartBeatString;
+
+    //floating point values
+    //used as a transition from strings to integers
+    stateFeedbackAsFloat[0] := gdFloat;
+    stateFeedbackAsFloat[1] := zOneFloat;
+    stateFeedbackAsFloat[2] := zTwoFloat;
+    stateFeedbackAsFloat[3] := zThreeFloat;
+    stateFeedbackAsFloat[4] := panelTemperatureFlt;
+    stateFeedbackAsFloat[5] := heartBeatFloat;
+
+    mountuSDCard();
+
+    hndl := file_LoadImageControl("CONT~F2C.dat", "CONT~F2C.gci", 1);
+
+    disableFormsBackground();
+
+    gfx_Set(SCREEN_MODE, LANDSCAPE);
+    gfx_TransparentColour(WHITE);
+    gfx_Transparency(ON);
+
+    touch_Set(TOUCH_ENABLE);
+
+    //initialize serial communications
+    com_SetBaud(COM0, 11520);
+    com_Init(commBuffer, 80, 0 );
+    stringPointer := str_Ptr(stringBuffer);
+
+    //for checking communications
+    //create a system timer for 60 seconds
+    sys_SetTimer(TIMER0, 60000);
+    sys_SetTimerEvent(TIMER0, checkComms);
+
+    //monitor screen activity
+    sys_SetTimer(TIMER1, 60000);
+    sys_SetTimerEvent(TIMER1, monitorScreenActivity);
+
+    //read serial communications input
+    serialReceive();
+
+    //handle form navigation
+    formNumber := 0;
+
+    repeat
+
+        returnValue := Form[formNumber]();
+        formNumber := returnValue;
+        drawCommsOK := 0;
+        drawLostComms := 0;
+
+    forever
+
+endfunc
+
+
+
+
